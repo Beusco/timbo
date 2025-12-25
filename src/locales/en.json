@@ -1,0 +1,58 @@
+{
+    "app": {
+        "title": "TIMBO",
+        "subtitle": "TOOL",
+        "status": "Server Status",
+        "online": "Online",
+        "offline": "Offline",
+        "version": "v3.0.0-beta"
+    },
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "devices": "Supported Models",
+        "downloads": "Downloads",
+        "console": "Console",
+        "settings": "Settings",
+        "admin": "Admin User",
+        "license": "Pro License",
+        "credits": "Credits"
+    },
+    "dashboard": {
+        "deviceStatus": "Device Status",
+        "waiting": "Waiting for device connection...",
+        "connectHint": "Connect your phone via USB cable",
+        "simulate": "Simulate Connection",
+        "connecting": "Connecting...",
+        "disconnect": "Disconnect",
+        "quickActions": "Quick Actions",
+        "readInfo": "Read Info",
+        "readInfoDesc": "Get detailed device specs",
+        "networkUnlock": "Network Unlock",
+        "networkUnlockDesc": "Direct unlock via server",
+        "frpReset": "FRP Reset",
+        "frpResetDesc": "Remove Google account",
+        "flashFirmware": "Flash Firmware",
+        "flashFirmwareDesc": "Update or downgrade OS",
+        "adbAuth": "ADB Authorized",
+        "rooted": "Rooted",
+        "imei": "IMEI",
+        "serial": "Serial No",
+        "android": "Android Version",
+        "battery": "Battery"
+    },
+    "console": {
+        "title": "Operation Log",
+        "ready": "Ready for operations...",
+        "searching": "Searching for devices...",
+        "found": "Device found",
+        "reading": "Reading device information...",
+        "readSuccess": "Device information read successfully",
+        "disconnected": "Device disconnected",
+        "unlocking": "Starting Network Unlock operation...",
+        "checkingRoot": "Checking root status...",
+        "calcCodes": "Calculating unlock codes (Server)...",
+        "codesSuccess": "Unlock codes calculated successfully",
+        "writing": "Writing codes to device...",
+        "unlockSuccess": "Network Unlock Successful! Device will reboot."
+    }
+}

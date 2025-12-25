@@ -1,0 +1,58 @@
+{
+    "app": {
+        "title": "TIMBO",
+        "subtitle": "TOOL",
+        "status": "État du Serveur",
+        "online": "En ligne",
+        "offline": "Hors ligne",
+        "version": "v3.0.0-beta"
+    },
+    "sidebar": {
+        "dashboard": "Tableau de bord",
+        "devices": "Modèles supportés",
+        "downloads": "Téléchargements",
+        "console": "Console",
+        "settings": "Paramètres",
+        "admin": "Utilisateur Admin",
+        "license": "Licence Pro",
+        "credits": "Crédits"
+    },
+    "dashboard": {
+        "deviceStatus": "État de l'appareil",
+        "waiting": "En attente de connexion...",
+        "connectHint": "Connectez votre téléphone via câble USB",
+        "simulate": "Simuler Connexion",
+        "connecting": "Connexion...",
+        "disconnect": "Déconnecter",
+        "quickActions": "Actions Rapides",
+        "readInfo": "Lire Infos",
+        "readInfoDesc": "Obtenir les spécifications détaillées",
+        "networkUnlock": "Désimlockage Réseau",
+        "networkUnlockDesc": "Déblocage direct via serveur",
+        "frpReset": "Reset FRP",
+        "frpResetDesc": "Supprimer compte Google",
+        "flashFirmware": "Flasher Firmware",
+        "flashFirmwareDesc": "Mise à jour ou downgrade OS",
+        "adbAuth": "ADB Autorisé",
+        "rooted": "Rooté",
+        "imei": "IMEI",
+        "serial": "N° Série",
+        "android": "Version Android",
+        "battery": "Batterie"
+    },
+    "console": {
+        "title": "Journal d'Opération",
+        "ready": "Prêt pour les opérations...",
+        "searching": "Recherche d'appareils...",
+        "found": "Appareil trouvé",
+        "reading": "Lecture des informations...",
+        "readSuccess": "Informations lues avec succès",
+        "disconnected": "Appareil déconnecté",
+        "unlocking": "Démarrage du désimlockage réseau...",
+        "checkingRoot": "Vérification du root...",
+        "calcCodes": "Calcul des codes (Serveur)...",
+        "codesSuccess": "Codes calculés avec succès",
+        "writing": "Écriture des codes sur l'appareil...",
+        "unlockSuccess": "Désimlockage Réussi ! L'appareil va redémarrer."
+    }
+}
