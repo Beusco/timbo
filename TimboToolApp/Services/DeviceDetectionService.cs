@@ -17,8 +17,13 @@ namespace TimboToolApp.Services
             try
             {
                 // Monitor for USB Insertion/Removal via WMI
-                WqlEventQuery query = new WqlEventQuery("SELECT * FROM __InstanceOperationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_PnPEntity'");
-                _watcher = new ManagementEventWatcher(query);
+                // Note: WMI might throw on restricted systems or non-Windows, catch strictly.
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                {
+                    WqlEventQuery query = new WqlEventQuery("SELECT * FROM __InstanceOperationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_PnPEntity'");
+                    _watcher = new ManagementEventWatcher(query);
+                    // ... event wiring ...
+                }
                 _watcher.EventArrived += (s, e) =>
                 {
                     string eventType = e.NewEvent.ClassPath.ClassName;
@@ -37,7 +42,8 @@ namespace TimboToolApp.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Hardware Monitoring Error: " + ex.Message);
+                // Log strictly to console/debug, don't crash, but maybe inform user in UI log if possible
+                System.Diagnostics.Debug.WriteLine("Hardware Monitoring Error: " + ex.Message);
             }
         }
 
