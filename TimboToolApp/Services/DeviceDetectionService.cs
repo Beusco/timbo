@@ -22,23 +22,22 @@ namespace TimboToolApp.Services
                 {
                     WqlEventQuery query = new WqlEventQuery("SELECT * FROM __InstanceOperationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_PnPEntity'");
                     _watcher = new ManagementEventWatcher(query);
-                    // ... event wiring ...
+                    _watcher.EventArrived += (s, e) =>
+                    {
+                        string eventType = e.NewEvent.ClassPath.ClassName;
+                        if (eventType == "__InstanceCreationEvent")
+                        {
+                            // Device Inserted
+                            Application.Current.Dispatcher.Invoke(() => DeviceConnected?.Invoke("New Device Detected on USB"));
+                        }
+                        else if (eventType == "__InstanceDeletionEvent")
+                        {
+                            // Device Removed
+                            Application.Current.Dispatcher.Invoke(() => DeviceDisconnected?.Invoke());
+                        }
+                    };
+                    _watcher.Start();
                 }
-                _watcher.EventArrived += (s, e) =>
-                {
-                    string eventType = e.NewEvent.ClassPath.ClassName;
-                    if (eventType == "__InstanceCreationEvent")
-                    {
-                        // Device Inserted
-                        Application.Current.Dispatcher.Invoke(() => DeviceConnected?.Invoke("New Device Detected on USB"));
-                    }
-                    else if (eventType == "__InstanceDeletionEvent")
-                    {
-                        // Device Removed
-                        Application.Current.Dispatcher.Invoke(() => DeviceDisconnected?.Invoke());
-                    }
-                };
-                _watcher.Start();
             }
             catch (Exception ex)
             {
