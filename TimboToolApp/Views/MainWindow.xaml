@@ -49,7 +49,7 @@
                 <Button Content="Write Cert" Style="{StaticResource ModernButton}" Margin="5"/>
                 <Button Content="Bootloader" Style="{StaticResource ModernButton}" Margin="5"/>
                 <Button Content="Factory Reset" Style="{StaticResource ModernButton}" Margin="5"/>
-            </UniformUniformGrid>
+            </UniformGrid>
 
             <!-- Console Log -->
             <Border Grid.Row="2" Background="Black" CornerRadius="10" Padding="15">
