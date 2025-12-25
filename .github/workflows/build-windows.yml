@@ -19,13 +19,13 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Restore dependencies
-      run: dotnet restore TimboTool/TimboTool.sln
+      run: dotnet restore TimboTool.sln
 
     - name: Build
-      run: dotnet build TimboTool/TimboTool.sln --configuration Release --no-restore
+      run: dotnet build TimboTool.sln --configuration Release --no-restore
 
     - name: Publish
-      run: dotnet publish TimboTool/TimboToolApp/TimboToolApp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o ./publish
+      run: dotnet publish TimboToolApp/TimboToolApp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o ./publish
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4

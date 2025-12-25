@@ -1,54 +1,36 @@
-# Timbo Tool - Professional Phone Servicing Software
+# Timbo Tool - Professional Phone Servicing Software (Windows)
 
-Timbo Tool is a comprehensive web-based simulation of professional phone decoding and repair software. It features a premium dark-mode interface, simulated device operations (Unlock, Flash, Repair), and a persistent credit system.
+Timbo Tool is a native Windows application (C# / WPF) designed for professional phone servicing, featuring real hardware detection and a premium interface.
 
-## 🚀 Quick Start
+## 🚀 Features
 
-1.  **Install Dependencies**:
-    ```bash
-    npm install
-    ```
+- **Real Hardware Detection**: Monitors USB and COM ports for connected devices.
+- **Professional Dashboard**: Clean, tech-focused interface for FRP, Unlocking, and Repair operations.
+- **Static Authentication**: Login with `Barry` / `@123456`.
+- **Credit System**: Integrated account credit management (2000 starting credits).
+- **Automated Builds**: GitHub Actions automatically generates the `.exe` for every release.
 
-2.  **Start Development Server**:
-    ```bash
-    npm run dev
-    ```
+## 💻 Installation (.exe)
 
-3.  **Login Credentials**:
-    - **Username**: `Barry`
-    - **Password**: `@123456`
+1.  **Repository**: [https://github.com/Beusco/timbo](https://github.com/Beusco/timbo)
+2.  **Download**: 
+    - Go to the **"Actions"** tab on GitHub.
+    - Select the latest **"Build Windows Application"** run.
+    - Download the **"TimboTool-Windows-App"** artifact from the bottom of the page.
+    - Unzip and run `TimboToolApp.exe`.
 
-## 💻 Installation as Desktop App (PWA)
+## 🛠 For Developers
 
-Timbo Tool is configured as a Progressive Web App (PWA), allowing you to install it on your computer and run it like a native application.
+### Prerequisites
+- .NET 8.0 SDK
+- Visual Studio 2022 or VS Code
 
-### Procedure for Google Chrome / Edge / Brave
+### Build Externally
+```bash
+dotnet restore
+dotnet build
+dotnet publish -c Release -r win-x64 --self-contained true
+```
 
-1.  **Open the Application**:
-    Run `npm run dev` and open the local URL (e.g., `http://localhost:5173`) in your browser.
-
-2.  **Find the Install Icon**:
-    Look at the right side of the address bar (URL bar). You should see a small icon that looks like a computer screen with a down arrow, or a "plus" (+) sign.
-    - *Note: Sometimes it appears as "Install Timbo Tool".*
-
-3.  **Click Install**:
-    Click the icon and confirm the installation dialog.
-
-4.  **Launch**:
-    The app will open in its own standalone window, without browser tabs or menus, giving you a native software experience. A shortcut will also be created on your desktop/dock.
-
-### Troubleshooting
-If you don't see the install icon:
-- Ensure the page has fully loaded.
-- Click the "Three Dots" menu in the browser -> "Save and Share" (or "Apps") -> "Install Timbo Tool".
-
-## 🛠 Features
-
-- **Static User System**: Secure login with credit management.
-- **Credit System**: 2000 starting credits, 100 cost per login.
-- **Device Simulation**: Realistic connection and operation logs for Samsung S24 Ultra.
-- **Multi-language**: English and French support.
-- **Operations**:
-    - Network Unlock & FRP Reset
-    - IMEI Repair & Firmware Flashing
-    - Bootloader Unlock & Root
+## 📄 License
+Professional use only. Simulated for demonstration.
