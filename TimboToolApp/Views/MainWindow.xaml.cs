@@ -7,6 +7,7 @@ namespace TimboToolApp.Views
     public partial class MainWindow : Window
     {
         private AdbService _adbService;
+        private DeviceDetectionService _deviceService;
 
         public MainWindow()
         {
