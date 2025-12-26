@@ -43,12 +43,14 @@
 
             <!-- Operations Grid -->
             <UniformGrid Grid.Row="1" Columns="4" Rows="3">
-                <Button Content="FRP Reset" Style="{StaticResource ModernButton}" Margin="5"/>
-                <Button Content="Network Unlock" Style="{StaticResource ModernButton}" Margin="5"/>
-                <Button Content="IMEI Repair" Style="{StaticResource ModernButton}" Margin="5"/>
-                <Button Content="Write Cert" Style="{StaticResource ModernButton}" Margin="5"/>
-                <Button Content="Bootloader" Style="{StaticResource ModernButton}" Margin="5"/>
-                <Button Content="Factory Reset" Style="{StaticResource ModernButton}" Margin="5"/>
+                <Button Content="Read Info (ADB)" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReadInfo_Click"/>
+                <Button Content="FRP Reset" Style="{StaticResource ModernButton}" Margin="5" Click="BtnFrp_Click"/>
+                <Button Content="Network Unlock" Style="{StaticResource ModernButton}" Margin="5" Click="BtnUnlock_Click"/>
+                <Button Content="IMEI Repair" Style="{StaticResource ModernButton}" Margin="5" Click="BtnImei_Click"/>
+                <Button Content="Reboot System" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReboot_Click"/>
+                <Button Content="Bootloader" Style="{StaticResource ModernButton}" Margin="5" Click="BtnBootloader_Click"/>
+                <Button Content="Factory Reset" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReset_Click"/>
+                <Button Content="Install Drivers" Style="{StaticResource ModernButton}" Margin="5" Click="BtnDrivers_Click"/>
             </UniformGrid>
 
             <!-- Console Log -->
