@@ -25,6 +25,7 @@ namespace TimboToolApp.Services
                     ProcessStartInfo psi = new ProcessStartInfo
                     {
                         FileName = adbPath,
+                        WorkingDirectory = Path.GetDirectoryName(adbPath),
                         Arguments = arguments,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
