@@ -98,7 +98,7 @@
                         <Button Content="Full Backup ADB" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
                         <Button Content="Bootloader Unlock" Style="{StaticResource ModernButton}" Margin="8" Click="BtnBootloader_Click"/>
                         <Button Content="Mode EDL / 9008" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
-                        <Button Content="Diag & Diagnostic" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Diag &amp; Diagnostic" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
                     </UniformGrid>
                 </TabItem>
                 <TabItem Header="PARTITIONS">
