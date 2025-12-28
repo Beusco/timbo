@@ -46,9 +46,16 @@ namespace TimboToolApp.Services
                 }
                 catch (Exception ex)
                 {
-                    return $"System Error: {ex.Message} (Is ADB installed?)";
+                    return $"Erreur Système : {ex.Message} (Vérifiez si ADB est bien présent dans Tools/adb/)";
                 }
             });
+        }
+
+        public async Task<bool> IsDeviceConnectedAsync()
+        {
+            string result = await ExecuteAdbCommandAsync("devices");
+            // Check if there is more than just the header "List of devices attached"
+            return result.Split('\n').Length > 1 && result.Contains("\tdevice");
         }
     }
 }

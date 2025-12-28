@@ -6,13 +6,14 @@ namespace TimboToolApp.Services
     public static class CreditsManager
     {
         private const int DefaultCredits = 2000;
-        private const int LoginCost = 100;
-        private static readonly string LogFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "credits.dat");
+        private static readonly string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimboTool");
+        private static readonly string LogFile = Path.Combine(AppDataPath, "credits.dat");
 
         public static int CurrentCredits { get; private set; }
 
         static CreditsManager()
         {
+            if (!Directory.Exists(AppDataPath)) Directory.CreateDirectory(AppDataPath);
             LoadCredits();
         }
 
