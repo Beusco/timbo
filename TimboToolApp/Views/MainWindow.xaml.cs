@@ -157,6 +157,8 @@ namespace TimboToolApp.Views
 
         private async void BtnUnlock_Click(object sender, RoutedEventArgs e)
         {
+            if (!CheckConnectionOrLog()) return;
+            
             Log("OPÉRATION : Désimlockage Réseau...");
             await SimulateOperation("Analyse du modem", 3);
             if (CreditsManager.Deduct(200))
@@ -166,10 +168,17 @@ namespace TimboToolApp.Views
             }
         }
 
-        private async void BtnImei_Click(object sender, RoutedEventArgs e) { Log("OPÉRATION : Réparation IMEI."); await SimulateOperation("Patching NVRAM", 4); Log("IMEI restauré."); }
+        private async void BtnImei_Click(object sender, RoutedEventArgs e) 
+        { 
+            if (!CheckConnectionOrLog()) return;
+            Log("OPÉRATION : Réparation IMEI."); 
+            await SimulateOperation("Patching NVRAM", 4); 
+            Log("IMEI restauré."); 
+        }
         
         private async void BtnSimulate_Click(object sender, RoutedEventArgs e)
         {
+            if (!CheckConnectionOrLog()) return;
             if (sender is Button btn)
             {
                 string tag = btn.Content.ToString() ?? "Opération";
@@ -202,8 +211,31 @@ namespace TimboToolApp.Views
 
         private void BtnClear_Click(object sender, RoutedEventArgs e) => ConsoleLog.Text = $"[{DateTime.Now:HH:mm:ss}] Console vidée.";
         
-        private async void BtnReset_Click(object sender, RoutedEventArgs e) { Log("Action : Factory Reset..."); await SimulateOperation("Wiping UserData", 3); Log("Appareil réinitialisé."); }
-        private async void BtnBootloader_Click(object sender, RoutedEventArgs e) { Log("Action : Unlock Bootloader..."); await SimulateOperation("OEM Unlock", 4); Log("Terminé."); }
+        private async void BtnReset_Click(object sender, RoutedEventArgs e) 
+        { 
+            if (!CheckConnectionOrLog()) return;
+            Log("Action : Factory Reset..."); 
+            await SimulateOperation("Wiping UserData", 3); 
+            Log("Appareil réinitialisé."); 
+        }
+
+        private async void BtnBootloader_Click(object sender, RoutedEventArgs e) 
+        { 
+            if (!CheckConnectionOrLog()) return;
+            Log("Action : Unlock Bootloader..."); 
+            await SimulateOperation("OEM Unlock", 4); 
+            Log("Terminé."); 
+        }
+
+        private bool CheckConnectionOrLog()
+        {
+            if (!_isDeviceConnected)
+            {
+                Log("ERREUR : Aucun appareil détecté. Vérifiez le câble USB.");
+                return false;
+            }
+            return true;
+        }
 
         private async Task SimulateOperation(string step, int seconds)
         {
