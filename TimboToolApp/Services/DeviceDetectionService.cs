@@ -45,11 +45,12 @@ namespace TimboToolApp.Services
                             {
                                 DeviceType = combined.Contains("SAMSUNG") ? "SAMSUNG" : "ANDROID";
                                 
-                                if (combined.Contains("ADB")) CurrentMode = "ADB";
-                                else if (combined.Contains("DOWNLOAD") || combined.Contains("MODEM") || combined.Contains("GADGET")) CurrentMode = "DOWNLOAD";
-                                else if (combined.Contains("FASTBOOT")) CurrentMode = "FASTBOOT";
-                                else CurrentMode = "USB_CONNECTED";
+                                string detectedMode = "USB_CONNECTED";
+                                if (combined.Contains("ADB")) detectedMode = "ADB";
+                                else if (combined.Contains("DOWNLOAD") || combined.Contains("MODEM") || combined.Contains("GADGET")) detectedMode = "DOWNLOAD";
+                                else if (combined.Contains("FASTBOOT")) detectedMode = "FASTBOOT";
 
+                                SetModeWithPriority(detectedMode);
                                 Application.Current.Dispatcher.Invoke(() => DeviceConnected?.Invoke(deviceName));
                             }
                         }
@@ -66,6 +67,23 @@ namespace TimboToolApp.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Hardware Monitoring Error: " + ex.Message);
+            }
+        }
+
+        private void SetModeWithPriority(string newMode)
+        {
+            // Priority: ADB > DOWNLOAD > FASTBOOT > USB_CONNECTED
+            int GetPriority(string m) => m switch { 
+                "ADB" => 4, 
+                "DOWNLOAD" => 3, 
+                "FASTBOOT" => 2, 
+                "USB_CONNECTED" => 1, 
+                _ => 0 
+            };
+
+            if (GetPriority(newMode) >= GetPriority(CurrentMode) || CurrentMode == "DISCONNECTED")
+            {
+                CurrentMode = newMode;
             }
         }
 
