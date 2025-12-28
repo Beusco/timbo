@@ -24,15 +24,26 @@ namespace TimboToolApp.Services
                     _watcher = new ManagementEventWatcher(query);
                     _watcher.EventArrived += (s, e) =>
                     {
+                        var targetInstance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
                         string eventType = e.NewEvent.ClassPath.ClassName;
+                        
+                        string deviceName = targetInstance["Name"]?.ToString() ?? "Unknown Device";
+                        string deviceDesc = targetInstance["Description"]?.ToString() ?? "";
+                        
                         if (eventType == "__InstanceCreationEvent")
                         {
-                            // Device Inserted
-                            Application.Current.Dispatcher.Invoke(() => DeviceConnected?.Invoke("New Device Detected on USB"));
+                            // Filter for common phone/service strings to avoid mouse/keyboard triggers
+                            string combined = (deviceName + " " + deviceDesc).ToUpper();
+                            if (combined.Contains("SAMSUNG") || combined.Contains("MOBILE") || 
+                                combined.Contains("ADB") || combined.Contains("MODEM") || 
+                                combined.Contains("ANDROID") || combined.Contains("QUALCOMM") ||
+                                combined.Contains("MTK") || combined.Contains("GADGET"))
+                            {
+                                Application.Current.Dispatcher.Invoke(() => DeviceConnected?.Invoke(deviceName));
+                            }
                         }
                         else if (eventType == "__InstanceDeletionEvent")
                         {
-                            // Device Removed
                             Application.Current.Dispatcher.Invoke(() => DeviceDisconnected?.Invoke());
                         }
                     };

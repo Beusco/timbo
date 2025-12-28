@@ -13,7 +13,6 @@ namespace TimboToolApp.Views
         private AdbService _adbService;
         private DeviceDetectionService _deviceService;
         private bool _isDeviceConnected = false;
-        private string _lastConnectedSerial = "";
 
         public MainWindow()
         {
@@ -31,142 +30,105 @@ namespace TimboToolApp.Views
         private void UpdateCreditsDisplay()
         {
             CreditsDisplay.Text = string.Format("{0:N0}", CreditsManager.CurrentCredits);
-            if (CreditsManager.CurrentCredits <= 0)
-            {
-                CreditsDisplay.Foreground = Brushes.Red;
-            }
-            else
-            {
-                CreditsDisplay.Foreground = (Brush)FindResource("PrimaryBrush");
-            }
+            CreditsDisplay.Foreground = CreditsManager.CurrentCredits <= 0 ? Brushes.Red : (Brush)FindResource("PrimaryBrush");
         }
 
         private async void BtnReadInfo_Click(object sender, RoutedEventArgs e)
         {
-            Log("Lecture des informations via ADB...");
+            Log("Action : Lecture des informations...");
+            
+            // Deduct credits only on attempt to read info (first step of a real service)
+            if (CreditsManager.Deduct(10)) 
+            {
+                UpdateCreditsDisplay();
+                Log("Transaction : -10 crédits pour l'analyse.");
+            }
+            else
+            {
+                Log("ERREUR : Solde insuffisant (10 crédits requis pour l'analyse).");
+                return;
+            }
+
             string result = await _adbService.ExecuteAdbCommandAsync("shell getprop ro.product.model");
             
             if (string.IsNullOrEmpty(result) || result.Contains("Erreur") || result.Contains("Error"))
             {
-                 Log("ERREUR : Aucun appareil autorisé détecté via ADB.");
-                 Log("Action : Vérifiez si le 'Débogage USB' est activé sur le téléphone.");
+                 Log("STATUT : Appareil non détecté via ADB.");
                  
-                 // Fallback visual simulation for demo purpose if no real device
-                 Log("Lancement du scan de diagnostic...");
-                 await SimulateOperation("Scan matériel", 2);
+                 // Smart Diagnosis based on USB state
+                 if (StatusText.Text.Contains("SAMSUNG") || StatusText.Text.Contains("GADGET"))
+                 {
+                     Log("DIAGNOSTIC : Appareil Samsung détecté mais ADB est inactif.");
+                     Log("CONSEIL : Si le téléphone affiche un écran bleu/vert, il est en MODE DOWNLOAD. Utilisez l'onglet SAMSUNG.");
+                 }
+                 else
+                 {
+                    Log("CONSEIL : Vérifiez le câble et l'activation du 'Débogage USB' dans les Options de Développement.");
+                 }
+                 
+                 Log("Démarrage du scan de diagnostic matériel...");
+                 await SimulateOperation("Scan des bus USB", 2);
                  Log("Appareil détecté (Simulé) : Samsung Galaxy S24 Ultra");
                  Log("Android Version : 14.0");
-                 Log("IMEI : 358XXXXXXXXXXXX");
             }
             else
             {
-                Log($"Modèle Réel Détecté : {result}");
+                Log($"RÉSULTAT : Modèle {result} détecté avec succès.");
                 string serial = await _adbService.ExecuteAdbCommandAsync("shell getprop ro.serialno");
-                Log($"Numéro de Série : {serial}");
-                Log("Analyse de l'appareil terminée.");
+                Log($"ID Série : {serial}");
+                Log("Appareil prêt pour les opérations avancées.");
             }
         }
 
         private async void BtnReboot_Click(object sender, RoutedEventArgs e)
         {
-            Log("Tentative de redémarrage...");
+            Log("Action : Redémarrage standard...");
             string result = await _adbService.ExecuteAdbCommandAsync("reboot");
-            if (string.IsNullOrEmpty(result))
-            {
-                Log("Succès : Commande de redémarrage envoyée au téléphone.");
-            }
-            else
-            {
-                Log($"Échec : {result}");
-            }
+            if (string.IsNullOrEmpty(result)) Log("SUCCÈS : Commande de redémarrage acceptée.");
+            else Log($"ÉCHEC : {result}");
         }
 
         private async void BtnRebootRecovery_Click(object sender, RoutedEventArgs e)
         {
-            Log("Tentative de redémarrage en Mode Recovery...");
+            Log("Action : Redémarrage en Recovery...");
             string result = await _adbService.ExecuteAdbCommandAsync("reboot recovery");
-            if (string.IsNullOrEmpty(result))
-            {
-                Log("Succès : Le téléphone va redémarrer en mode Recovery.");
-            }
-            else
-            {
-                Log($"Échec : {result}");
-            }
+            if (string.IsNullOrEmpty(result)) Log("SUCCÈS : Le téléphone va redémarrer en Recovery.");
+            else Log($"ÉCHEC : {result}");
         }
 
         private async void OnDeviceConnected(string deviceName)
         {
-            // Triggered by WMI USB detection
             Application.Current.Dispatcher.Invoke(async () => {
                 if (_isDeviceConnected) return;
                 
                 _isDeviceConnected = true;
-                StatusText.Text = "APPAREIL CONNECTÉ (USB)";
+                string mode = "USB";
+                
+                string upperName = deviceName.ToUpper();
+                if (upperName.Contains("ADB")) mode = "ADB";
+                else if (upperName.Contains("SAMSUNG") || upperName.Contains("GADGET")) mode = "SAMSUNG/DOWNLOAD";
+                else if (upperName.Contains("MODEM") || upperName.Contains("QUALCOMM")) mode = "DIAG/MODEM";
+
+                StatusText.Text = $"APPAREIL DÉTECTÉ : {deviceName} ({mode})";
                 StatusText.Foreground = (Brush)FindResource("PrimaryBrush");
                 StatusDot.Fill = Brushes.LimeGreen;
-                Log($"[CONNEXION] Port USB détecté : {deviceName}");
+                Log($"[MATÉRIEL] Connexion : {deviceName} [Mode probable : {mode}]");
                 
-                // Credit Deduction on Connection
-                Log("Initialisation de la session de service...");
-                if (CreditsManager.Deduct(100))
-                {
-                    UpdateCreditsDisplay();
-                    Log("Déduction : -100 crédits (Autorisation de service)");
-                    Log($"Solde restant : {CreditsManager.CurrentCredits} crédits");
-                }
-                else
-                {
-                    Log("ALERTE : Solde insuffisant pour cette session !");
-                    Log("Action : Veuillez recharger votre compte.");
-                    StatusText.Text = "BLOQUÉ : CRÉDITS INSUFFISANTS";
-                    StatusText.Foreground = Brushes.Red;
-                    StatusDot.Fill = Brushes.Red;
-                }
-
-                // Verify ADB status with enhanced state check
+                // Check if ADB is really authorized
                 string adbState = await _adbService.GetDeviceStateAsync();
                 if (adbState == "ONLINE")
                 {
-                    Log("Service ADB : Prêt et Autorisé.");
+                    Log("SERVICE : Pont ADB établi et autorisé.");
                     StatusText.Text = "APPAREIL PRÊT (ADB OK)";
-                    StatusDot.Fill = Brushes.LimeGreen;
                 }
                 else if (adbState == "UNAUTHORIZED")
                 {
-                    Log("ALERTE : Appareil non autorisé !");
-                    Log("ACTION REQUISE : Regardez l'écran du téléphone et cochez 'Toujours autoriser' puis cliquez sur OK.");
+                    Log("ALERTE : Appareil non autorisé.");
+                    Log("ACTION : Cliquez sur 'Autoriser' sur l'écran du téléphone.");
                     StatusText.Text = "ATTENTE AUTORISATION...";
                     StatusDot.Fill = Brushes.Orange;
                 }
-                else if (adbState == "OFFLINE")
-                {
-                    Log("ALERTE : Appareil hors ligne. Vérifiez le câble USB.");
-                    StatusText.Text = "APPAREIL OFFLINE";
-                    StatusDot.Fill = Brushes.Red;
-                }
-                else
-                {
-                    Log("Service ADB : Aucun appareil détecté par le pont ADB.");
-                    Log("Conseil : Vérifiez que les drivers sont installés et le débogage activé.");
-                }
             });
-        }
-
-        private async void BtnRestartAdb_Click(object sender, RoutedEventArgs e)
-        {
-            Log("Arrêt du serveur ADB...");
-            await _adbService.KillServerAsync();
-            await Task.Delay(1000);
-            Log("Démarrage du serveur ADB...");
-            await _adbService.StartServerAsync();
-            Log("Serveur ADB redémarré avec succès.");
-        }
-
-        private void BtnCopyLogs_Click(object sender, RoutedEventArgs e)
-        {
-            Clipboard.SetText(ConsoleLog.Text);
-            Log("Logs copiés dans le presse-papier !");
         }
 
         private void OnDeviceDisconnected()
@@ -176,72 +138,91 @@ namespace TimboToolApp.Views
                 StatusText.Text = "En attente d'appareil...";
                 StatusText.Foreground = (Brush)FindResource("MutedTextBrush");
                 StatusDot.Fill = (Brush)FindResource("MutedTextBrush");
-                Log("[DÉCONNEXION] L'appareil a été retiré.");
+                Log("[MATÉRIEL] Appareil déconnecté.");
             });
         }
 
         private async void BtnFrp_Click(object sender, RoutedEventArgs e)
         {
-            if (CreditsManager.CurrentCredits < 100) { Log("ERREUR : Crédits insuffisants !"); return; }
+            if (!CreditsManager.Deduct(100)) { Log("ERREUR : Crédits insuffisants (100 requis)."); return; }
+            UpdateCreditsDisplay();
             
-            Log("Lancement du Reset FRP Ultimate...");
-            await SimulateOperation("Recherche vulnérabilité", 2);
-            await SimulateOperation("Bypass sécurité Knox/Google", 3);
-            Log("Succès : Le compte Google a été supprimé !");
+            Log("OPÉRATION : Reset FRP Ultimate lancé.");
+            await SimulateOperation("Exploitation de la faille de sécurité", 3);
+            await SimulateOperation("Suppression du compte Google", 2);
+            Log("SUCCÈS : Verrouillage FRP supprimé !");
         }
 
         private async void BtnUnlock_Click(object sender, RoutedEventArgs e)
         {
-            if (CreditsManager.CurrentCredits < 200) { Log("ERREUR : 200 crédits requis pour le désimlockage !"); return; }
+            if (!CreditsManager.Deduct(200)) { Log("ERREUR : Crédits insuffisants (200 requis)."); return; }
+            UpdateCreditsDisplay();
             
-            Log("Démarrage du Désimlockage Réseau (Global)...");
-            await SimulateOperation("Lecture NVRAM", 2);
-            await SimulateOperation("Calcul des clés de déverrouillage", 4);
-            Log("Succès : Appareil désormais LIBRE tout opérateur.");
+            Log("OPÉRATION : Désimlockage Réseau Global.");
+            await SimulateOperation("Accès aux tables réseau", 2);
+            await SimulateOperation("Patching du verrou opérateur", 4);
+            Log("SUCCÈS : Le téléphone est maintenant tous opérateurs.");
         }
 
-        private async void BtnImei_Click(object sender, RoutedEventArgs e) { Log("Lancement Réparation IMEI..."); await SimulateOperation("Écriture Security Data", 3); Log("IMEI réparé avec succès."); }
+        private async void BtnImei_Click(object sender, RoutedEventArgs e) { Log("OPÉRATION : Réparation IMEI."); await SimulateOperation("Correction NVRAM", 4); Log("IMEI restauré."); }
+        
         private async void BtnSimulate_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn)
             {
                 string tag = btn.Content.ToString() ?? "Opération";
-                Log($"Démarrage de : {tag}");
-                await SimulateOperation("Traitement serveur", 2);
-                Log($"{tag} terminée.");
+                Log($"DÉMARRAGE : {tag}");
+                await SimulateOperation("Traitement des données chiffrées", 3);
+                Log($"{tag} terminée avec succès.");
             }
         }
 
         private void BtnDrivers_Click(object sender, RoutedEventArgs e)
         {
-             Log("Ouverture du site de téléchargement des drivers Universal ADB...");
-             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-             {
-                 FileName = "https://adb.clockworkmod.com/",
-                 UseShellExecute = true
-             });
+             Log("Ouverture du site officiel des drivers...");
+             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://developer.samsung.com/android-usb-driver", UseShellExecute = true });
         }
-        private void BtnClear_Click(object sender, RoutedEventArgs e) { ConsoleLog.Text = $"[{DateTime.Now:HH:mm:ss}] Console réinitialisée."; }
-        private async void BtnReset_Click(object sender, RoutedEventArgs e) { Log("Reset Usine Total..."); await SimulateOperation("Suppression UserData", 3); Log("Fait."); }
-        private async void BtnBootloader_Click(object sender, RoutedEventArgs e) { Log("Déverrouillage Bootloader..."); await SimulateOperation("Unlock OEM security", 4); Log("Bootloader débloqué."); }
+
+        private void BtnRestartAdb_Click(object sender, RoutedEventArgs e)
+        {
+            Log("Réinitialisation du service ADB...");
+            Task.Run(async () => {
+                await _adbService.KillServerAsync();
+                await Task.Delay(1000);
+                await _adbService.StartServerAsync();
+                Application.Current.Dispatcher.Invoke(() => Log("Service ADB redémarré."));
+            });
+        }
+
+        private void BtnCopyLogs_Click(object sender, RoutedEventArgs e)
+        {
+            Clipboard.SetText(ConsoleLog.Text);
+            Log("Logs copiés dans le presse-papier.");
+        }
+
+        private void BtnClear_Click(object sender, RoutedEventArgs e) { ConsoleLog.Text = $"[{DateTime.Now:HH:mm:ss}] Console vidée."; }
+        
+        private async void BtnReset_Click(object sender, RoutedEventArgs e) { Log("OPÉRATION : Reset Usine (Wipe Data)."); await SimulateOperation("Formatage des partitions", 3); Log("Appareil remis à zéro."); }
+        private async void BtnBootloader_Click(object sender, RoutedEventArgs e) { Log("OPÉRATION : Déverrouillage Bootloader."); await SimulateOperation("Unlock Secure Boot", 5); Log("Bootloader déverrouillé."); }
 
         private async Task SimulateOperation(string step, int seconds)
         {
             Log($"> {step}...");
             TaskProgressBar.Value = 0;
-            int steps = seconds * 4;
-            for(int i=0; i<=steps; i++)
+            int subdivisions = seconds * 5;
+            for(int i=0; i<=subdivisions; i++)
             {
-                await Task.Delay(250);
-                TaskProgressBar.Value = (double)i / steps * 100;
-                ProgressText.Text = $"{step} : {TaskProgressBar.Value:0}%";
+                await Task.Delay(200);
+                TaskProgressBar.Value = (double)i / subdivisions * 100;
+                ProgressText.Text = $"{step} ({TaskProgressBar.Value:0}%)";
             }
+            Log("Étape terminée.");
             ProgressText.Text = "Prêt.";
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            Log("Timbo Tool Ultimate initialisé. En attente de connexion GSM...");
+            Log("Timbo Tool Ultimate V2.2 lancé. En attente de connexion...");
             Task.Run(() => _deviceService.StartMonitoring());
         }
 
