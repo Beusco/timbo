@@ -1,5 +1,7 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using TimboToolApp.Services;
 
 namespace TimboToolApp.Views
@@ -26,14 +28,14 @@ namespace TimboToolApp.Views
         {
             Log("Reading Device Info via ADB...");
             string result = await _adbService.ExecuteAdbCommandAsync("shell getprop ro.product.model");
-            if (result.Contains("Error"))
+            if (result.Contains("Error") || string.IsNullOrEmpty(result))
             {
                  Log(result);
                  Log("Fallback: Simulating Read Info...");
                  await SimulateOperation("Read Info", 2);
                  Log("Model: Samsung Galaxy S24 Ultra (Simulated)");
                  Log("Android: 14.0");
-                 Log("Patch: 2024-01-01");
+                 Log("Patch: 2024-12-01");
             }
             else
             {
@@ -49,7 +51,7 @@ namespace TimboToolApp.Views
             UpdateCredits();
             Log("Starting FRP Reset Operation...");
             await SimulateOperation("Initializing exploit...", 2);
-            await SimulateOperation("Bypassing security...", 3);
+            await SimulateOperation("Bypassing google account security...", 3);
             Log("FRP Lock Removed Successfully!");
         }
 
@@ -58,18 +60,44 @@ namespace TimboToolApp.Views
             if (!CreditsManager.DeductLogin()) { Log("Error: Insufficient Credits!"); return; }
             UpdateCredits();
             Log("Starting Network Unlock...");
-            await SimulateOperation("Reading modem data...", 2);
-            await SimulateOperation("Calculating NCK code...", 4);
+            await SimulateOperation("Reading modem configuration...", 2);
+            await SimulateOperation("Patching network tables...", 4);
             Log("Network Unlock Successful. Device will reboot.");
         }
 
         private async void BtnImei_Click(object sender, RoutedEventArgs e) => await RunSimulatedTask("IMEI Repair");
+        
         private async void BtnReboot_Click(object sender, RoutedEventArgs e) 
         {
             Log("Rebooting device...");
             await _adbService.ExecuteAdbCommandAsync("reboot");
             Log("Reboot command sent.");
         }
+
+        private async void BtnRebootRecovery_Click(object sender, RoutedEventArgs e)
+        {
+            Log("Rebooting to Recovery Mode...");
+            await _adbService.ExecuteAdbCommandAsync("reboot recovery");
+            Log("Reboot command sent.");
+        }
+
+        private void BtnClear_Click(object sender, RoutedEventArgs e)
+        {
+            ConsoleLog.Text = $"[{DateTime.Now:HH:mm:ss}] Console Cleared.";
+        }
+
+        private async void BtnSimulate_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn)
+            {
+                string featureName = btn.Content.ToString() ?? "Operation";
+                Log($"Starting {featureName}...");
+                await SimulateOperation("Environment Check...", 1);
+                await SimulateOperation("Processing target data...", 2);
+                Log($"{featureName} Completed.");
+            }
+        }
+
         private async void BtnBootloader_Click(object sender, RoutedEventArgs e) => await RunSimulatedTask("Bootloader Unlock");
         private async void BtnReset_Click(object sender, RoutedEventArgs e) => await RunSimulatedTask("Factory Reset");
         private void BtnDrivers_Click(object sender, RoutedEventArgs e) => Log("Opening Driver Installer...");
@@ -77,18 +105,23 @@ namespace TimboToolApp.Views
         private async Task RunSimulatedTask(string name)
         {
              Log($"Starting {name}...");
-             await SimulateOperation("Processing...", 3);
-             Log($"{name} Completed.");
+             await SimulateOperation("Working...", 3);
+             Log($"{name} Finished.");
         }
 
         private async Task SimulateOperation(string step, int seconds)
         {
-            for(int i=0; i<seconds; i++)
-            {
-                await System.Threading.Tasks.Task.Delay(500);
-                Log(".");
-            }
             Log(step);
+            TaskProgressBar.Value = 0;
+            int subdivisions = seconds * 4;
+            for(int i=0; i<=subdivisions; i++)
+            {
+                await System.Threading.Tasks.Task.Delay(250);
+                TaskProgressBar.Value = (double)i / subdivisions * 100;
+                ProgressText.Text = $"{step} ({TaskProgressBar.Value:0}%)";
+            }
+            Log("Task Segment Done.");
+            ProgressText.Text = "Ready.";
         }
 
         private void UpdateCredits()
@@ -98,23 +131,28 @@ namespace TimboToolApp.Views
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            Log("Application Started. Initializing hardware services...");
-            // Run on background thread to not freeze UI if WMI is slow
-            System.Threading.Tasks.Task.Run(() => _deviceService.StartMonitoring());
+            Log("Application Started. Hardware detection active.");
+            System.Threading.Tasks.Task.Run(() => {
+                _deviceService.StartMonitoring();
+            });
         }
 
         private void OnDeviceConnected(string deviceName)
         {
-            StatusText.Text = "DEVICE DETECTED: PHONE CONNECTED";
-            StatusText.Foreground = System.Windows.Media.Brushes.Green;
-            Log($"[HARDWARE] {deviceName}");
+            Application.Current.Dispatcher.Invoke(() => {
+                StatusText.Text = "DEVICE DETECTED: PHONE CONNECTED";
+                StatusText.Foreground = System.Windows.Media.Brushes.Green;
+                Log($"[HARDWARE] {deviceName}");
+            });
         }
 
         private void OnDeviceDisconnected()
         {
-            StatusText.Text = "Waiting for device...";
-            StatusText.Foreground = (System.Windows.Media.Brush)FindResource("PrimaryBrush");
-            Log("[HARDWARE] Device Disconnected.");
+            Application.Current.Dispatcher.Invoke(() => {
+                StatusText.Text = "Waiting for device...";
+                StatusText.Foreground = (System.Windows.Media.Brush)FindResource("PrimaryBrush");
+                Log("[HARDWARE] Device Disconnected.");
+            });
         }
 
         private void Log(string message)

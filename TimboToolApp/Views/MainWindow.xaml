@@ -26,32 +26,67 @@
         </Border>
 
         <!-- Main Content -->
-        <Grid Grid.Column="1" Margin="30">
+        <Grid Grid.Column="1" Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="200"/>
             </Grid.RowDefinitions>
 
             <!-- Device Status Header -->
-            <Border Grid.Row="0" Background="{StaticResource CardBrush}" CornerRadius="10" Padding="20" Margin="0,0,0,20">
-                <StackPanel Orientation="Horizontal">
+            <Border Grid.Row="0" Background="{StaticResource CardBrush}" CornerRadius="10" Padding="15" Margin="0,0,0,15">
+                <DockPanel>
                     <TextBlock Text="DEVICE STATUS:" FontWeight="Bold" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <TextBlock x:Name="StatusText" Text="Waiting for device..." Foreground="{StaticResource PrimaryBrush}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                </StackPanel>
+                    <TextBlock Text="MODE: ADB/FASTBOOT" HorizontalAlignment="Right" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" FontSize="11"/>
+                </DockPanel>
             </Border>
 
-            <!-- Operations Grid -->
-            <UniformGrid Grid.Row="1" Columns="4" Rows="3">
-                <Button Content="Read Info (ADB)" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReadInfo_Click"/>
-                <Button Content="FRP Reset" Style="{StaticResource ModernButton}" Margin="5" Click="BtnFrp_Click"/>
-                <Button Content="Network Unlock" Style="{StaticResource ModernButton}" Margin="5" Click="BtnUnlock_Click"/>
-                <Button Content="IMEI Repair" Style="{StaticResource ModernButton}" Margin="5" Click="BtnImei_Click"/>
-                <Button Content="Reboot System" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReboot_Click"/>
-                <Button Content="Bootloader" Style="{StaticResource ModernButton}" Margin="5" Click="BtnBootloader_Click"/>
-                <Button Content="Factory Reset" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReset_Click"/>
-                <Button Content="Install Drivers" Style="{StaticResource ModernButton}" Margin="5" Click="BtnDrivers_Click"/>
-            </UniformGrid>
+            <!-- Features Tabs -->
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Style="{StaticResource {x:Type TabControl}}">
+                <TabItem Header="GENERAL">
+                    <UniformGrid Columns="3" Margin="0,10">
+                        <Button Content="Read Info (ADB)" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReadInfo_Click"/>
+                        <Button Content="Reboot System" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReboot_Click"/>
+                        <Button Content="Reboot Recovery" Style="{StaticResource ModernButton}" Margin="5" Click="BtnRebootRecovery_Click"/>
+                        <Button Content="Factory Reset" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReset_Click"/>
+                        <Button Content="Install Drivers" Style="{StaticResource ModernButton}" Margin="5" Click="BtnDrivers_Click"/>
+                        <Button Content="Clear Logs" Style="{StaticResource ModernButton}" Margin="5" Background="#475569" Click="BtnClear_Click"/>
+                    </UniformGrid>
+                </TabItem>
+                <TabItem Header="SAMSUNG">
+                    <UniformGrid Columns="3" Margin="0,10">
+                        <Button Content="FRP Reset (Download)" Style="{StaticResource ModernButton}" Margin="5" Click="BtnFrp_Click"/>
+                        <Button Content="Soft Brick Fix" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                        <Button Content="CSC Change" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                        <Button Content="Exit Download" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReboot_Click"/>
+                    </UniformGrid>
+                </TabItem>
+                <TabItem Header="UNLOCK / SECURITY">
+                    <UniformGrid Columns="3" Margin="0,10">
+                        <Button Content="Network Unlock" Style="{StaticResource ModernButton}" Margin="5" Click="BtnUnlock_Click"/>
+                        <Button Content="Read Codes" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                        <Button Content="IMEI Repair" Style="{StaticResource ModernButton}" Margin="5" Click="BtnImei_Click"/>
+                        <Button Content="Write Certificate" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                        <Button Content="Patch Cert" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                    </UniformGrid>
+                </TabItem>
+                <TabItem Header="PARTITIONS / ADV">
+                    <UniformGrid Columns="3" Margin="0,10">
+                        <Button Content="Read Partition" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                        <Button Content="Write Dump" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                        <Button Content="Wipe NVData" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                        <Button Content="Bootloader Unlock" Style="{StaticResource ModernButton}" Margin="5" Click="BtnBootloader_Click"/>
+                    </UniformGrid>
+                </TabItem>
+            </TabControl>
+
+            <!-- Progress Bar Section -->
+            <StackPanel Grid.Row="2" Margin="0,10">
+                <TextBlock x:Name="ProgressText" Text="Task Progress" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,5"/>
+                <ProgressBar x:Name="TaskProgressBar" Height="8" Minimum="0" Maximum="100" Value="0" Background="#1E293B" Foreground="{StaticResource PrimaryBrush}" BorderThickness="0"/>
+            </StackPanel>
 
             <!-- Console Log -->
             <Border Grid.Row="2" Background="Black" CornerRadius="10" Padding="15">
