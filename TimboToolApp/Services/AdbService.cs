@@ -12,9 +12,18 @@ namespace TimboToolApp.Services
             {
                 try
                 {
+                    string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    string adbPath = Path.Combine(baseDir, "Tools", "adb", "adb.exe");
+
+                    // Fallback to current directory for single-file extraction behavior
+                    if (!File.Exists(adbPath))
+                    {
+                        adbPath = Path.Combine(baseDir, "adb.exe");
+                    }
+
                     ProcessStartInfo psi = new ProcessStartInfo
                     {
-                        FileName = "adb.exe", // Assumes adb.exe is in PATH or app directory
+                        FileName = adbPath,
                         Arguments = arguments,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,

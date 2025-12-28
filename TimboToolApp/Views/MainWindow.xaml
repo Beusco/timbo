@@ -1,97 +1,126 @@
 <Window x:Class="TimboToolApp.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Timbo Tool Pro" Height="700" Width="1100"
+        Title="Timbo Tool Ultimate - Service Professionnel" Height="750" Width="1150"
         Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="260"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
-            <StackPanel Margin="15">
-                <TextBlock Text="TIMBO TOOL" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,30"/>
+            <StackPanel Margin="20">
+                <TextBlock Text="TIMBO TOOL" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,10"/>
+                <TextBlock Text="Version Ultimate 2.0" FontSize="10" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,30"/>
                 
-                <Button Content="Dashboard" Style="{StaticResource ModernButton}" Background="Transparent" Foreground="{StaticResource TextBrush}" HorizontalContentAlignment="Left" Margin="0,0,0,5"/>
-                <Button Content="Supported Models" Style="{StaticResource ModernButton}" Background="Transparent" Foreground="{StaticResource MutedTextBrush}" HorizontalContentAlignment="Left" Margin="0,0,0,5"/>
-                <Button Content="Downloads" Style="{StaticResource ModernButton}" Background="Transparent" Foreground="{StaticResource MutedTextBrush}" HorizontalContentAlignment="Left" Margin="0,0,0,5"/>
+                <Button Content="Tableau de bord" Style="{StaticResource ModernButton}" Background="#1E293B" Foreground="{StaticResource TextBrush}" HorizontalContentAlignment="Left" Margin="0,0,0,8"/>
+                <Button Content="Modèles Supportés" Style="{StaticResource ModernButton}" Background="Transparent" Foreground="{StaticResource MutedTextBrush}" HorizontalContentAlignment="Left" Margin="0,0,0,8"/>
+                <Button Content="Téléchargements" Style="{StaticResource ModernButton}" Background="Transparent" Foreground="{StaticResource MutedTextBrush}" HorizontalContentAlignment="Left" Margin="0,0,0,8"/>
+                <Button Content="Paramètres" Style="{StaticResource ModernButton}" Background="Transparent" Foreground="{StaticResource MutedTextBrush}" HorizontalContentAlignment="Left" Margin="0,0,0,8"/>
                 
-                <Separator Background="{StaticResource BorderBrush}" Margin="0,20"/>
+                <Separator Background="{StaticResource BorderBrush}" Margin="0,30"/>
                 
-                <TextBlock x:Name="UserDisplay" Text="User: Barry" Foreground="{StaticResource TextBrush}" Margin="0,0,0,5"/>
-                <TextBlock x:Name="CreditsDisplay" Text="Credits: 1,900" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold"/>
+                <Border Background="#0F172A" CornerRadius="10" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="UTILISATEUR" FontSize="10" FontWeight="Bold" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="UserDisplay" Text="Barry" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,15"/>
+                        
+                        <TextBlock Text="CRÉDITS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="CreditsDisplay" Text="2,000" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Border>
 
         <!-- Main Content -->
-        <Grid Grid.Column="1" Margin="20">
+        <Grid Grid.Column="1" Margin="25">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="200"/>
+                <RowDefinition Height="220"/>
             </Grid.RowDefinitions>
 
             <!-- Device Status Header -->
-            <Border Grid.Row="0" Background="{StaticResource CardBrush}" CornerRadius="10" Padding="15" Margin="0,0,0,15">
+            <Border Grid.Row="0" Background="{StaticResource CardBrush}" CornerRadius="12" Padding="20" Margin="0,0,0,20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                 <DockPanel>
-                    <TextBlock Text="DEVICE STATUS:" FontWeight="Bold" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock x:Name="StatusText" Text="Waiting for device..." Foreground="{StaticResource PrimaryBrush}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    <TextBlock Text="MODE: ADB/FASTBOOT" HorizontalAlignment="Right" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" FontSize="11"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="{StaticResource MutedTextBrush}" Margin="0,0,10,0"/>
+                        <TextBlock Text="ÉTAT : " FontWeight="Bold" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="StatusText" Text="En attente d'appareil..." Foreground="{StaticResource MutedTextBrush}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Border Background="#334155" CornerRadius="4" Padding="8,4" Margin="0,0,10,0">
+                            <TextBlock Text="MULTI-MARQUES" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                        </Border>
+                        <TextBlock Text="MODE: AUTO-DÉTECTION" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" FontSize="11"/>
+                    </StackPanel>
                 </DockPanel>
             </Border>
 
             <!-- Features Tabs -->
-            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Style="{StaticResource {x:Type TabControl}}">
-                <TabItem Header="GENERAL">
-                    <UniformGrid Columns="3" Margin="0,10">
-                        <Button Content="Read Info (ADB)" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReadInfo_Click"/>
-                        <Button Content="Reboot System" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReboot_Click"/>
-                        <Button Content="Reboot Recovery" Style="{StaticResource ModernButton}" Margin="5" Click="BtnRebootRecovery_Click"/>
-                        <Button Content="Factory Reset" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReset_Click"/>
-                        <Button Content="Install Drivers" Style="{StaticResource ModernButton}" Margin="5" Click="BtnDrivers_Click"/>
-                        <Button Content="Clear Logs" Style="{StaticResource ModernButton}" Margin="5" Background="#475569" Click="BtnClear_Click"/>
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+                <TabItem Header="GÉNÉRAL">
+                    <UniformGrid Columns="3" Margin="0,15">
+                        <Button Content="Lire Infos (ADB)" Style="{StaticResource ModernButton}" Margin="8" Click="BtnReadInfo_Click"/>
+                        <Button Content="Redémarrer" Style="{StaticResource ModernButton}" Margin="8" Click="BtnReboot_Click"/>
+                        <Button Content="Mode Recovery" Style="{StaticResource ModernButton}" Margin="8" Click="BtnRebootRecovery_Click"/>
+                        <Button Content="Reset Usine" Style="{StaticResource ModernButton}" Margin="8" Click="BtnReset_Click"/>
+                        <Button Content="Installer Drivers" Style="{StaticResource ModernButton}" Margin="8" Click="BtnDrivers_Click"/>
+                        <Button Content="Effacer Console" Style="{StaticResource ModernButton}" Margin="8" Background="#475569" Click="BtnClear_Click"/>
                     </UniformGrid>
                 </TabItem>
-                <TabItem Header="SAMSUNG">
-                    <UniformGrid Columns="3" Margin="0,10">
-                        <Button Content="FRP Reset (Download)" Style="{StaticResource ModernButton}" Margin="5" Click="BtnFrp_Click"/>
-                        <Button Content="Soft Brick Fix" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
-                        <Button Content="CSC Change" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
-                        <Button Content="Exit Download" Style="{StaticResource ModernButton}" Margin="5" Click="BtnReboot_Click"/>
+                <TabItem Header="SAMSUNG / XIAOMI">
+                    <UniformGrid Columns="3" Margin="0,15">
+                        <Button Content="Reset FRP (Google)" Style="{StaticResource ModernButton}" Margin="8" Click="BtnFrp_Click"/>
+                        <Button Content="Bypass Compte Mi" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Fix Soft Brick" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Changement CSC" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Mode Download" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Quitter Download" Style="{StaticResource ModernButton}" Margin="8" Click="BtnReboot_Click"/>
                     </UniformGrid>
                 </TabItem>
-                <TabItem Header="UNLOCK / SECURITY">
-                    <UniformGrid Columns="3" Margin="0,10">
-                        <Button Content="Network Unlock" Style="{StaticResource ModernButton}" Margin="5" Click="BtnUnlock_Click"/>
-                        <Button Content="Read Codes" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
-                        <Button Content="IMEI Repair" Style="{StaticResource ModernButton}" Margin="5" Click="BtnImei_Click"/>
-                        <Button Content="Write Certificate" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
-                        <Button Content="Patch Cert" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
+                <TabItem Header="RÉSEAU / SÉCURITÉ">
+                    <UniformGrid Columns="3" Margin="0,15">
+                        <Button Content="Désimlock Réseau" Style="{StaticResource ModernButton}" Margin="8" Click="BtnUnlock_Click"/>
+                        <Button Content="Lire Codes NCK" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Réparation IMEI" Style="{StaticResource ModernButton}" Margin="8" Click="BtnImei_Click"/>
+                        <Button Content="Écrire Certificat" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Patch Certificat" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Backup QCN" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
                     </UniformGrid>
                 </TabItem>
-                <TabItem Header="PARTITIONS / ADV">
-                    <UniformGrid Columns="3" Margin="0,10">
-                        <Button Content="Read Partition" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
-                        <Button Content="Write Dump" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
-                        <Button Content="Wipe NVData" Style="{StaticResource ModernButton}" Margin="5" Click="BtnSimulate_Click"/>
-                        <Button Content="Bootloader Unlock" Style="{StaticResource ModernButton}" Margin="5" Click="BtnBootloader_Click"/>
+                <TabItem Header="FIRMWARE / FLASH">
+                    <UniformGrid Columns="3" Margin="0,15">
+                        <Button Content="Flash Firmware" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Full Backup ADB" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Bootloader Unlock" Style="{StaticResource ModernButton}" Margin="8" Click="BtnBootloader_Click"/>
+                        <Button Content="Mode EDL / 9008" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Diag & Diagnostic" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                    </UniformGrid>
+                </TabItem>
+                <TabItem Header="PARTITIONS">
+                    <UniformGrid Columns="3" Margin="0,15">
+                        <Button Content="Lire Partitions" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Écrire Partition" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Wipe NVData/EFS" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
+                        <Button Content="Lecture Dump Full" Style="{StaticResource ModernButton}" Margin="8" Click="BtnSimulate_Click"/>
                     </UniformGrid>
                 </TabItem>
             </TabControl>
 
             <!-- Progress Bar Section -->
-            <StackPanel Grid.Row="2" Margin="0,10">
-                <TextBlock x:Name="ProgressText" Text="Task Progress" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,5"/>
-                <ProgressBar x:Name="TaskProgressBar" Height="8" Minimum="0" Maximum="100" Value="0" Background="#1E293B" Foreground="{StaticResource PrimaryBrush}" BorderThickness="0"/>
+            <StackPanel Grid.Row="2" Margin="0,15">
+                <TextBlock x:Name="ProgressText" Text="Prêt pour opération" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,8"/>
+                <ProgressBar x:Name="TaskProgressBar" Height="10" Minimum="0" Maximum="100" Value="0" Background="#1E293B" Foreground="{StaticResource PrimaryBrush}" BorderThickness="0"/>
             </StackPanel>
 
             <!-- Console Log -->
-            <Border Grid.Row="2" Background="Black" CornerRadius="10" Padding="15">
+            <Border Grid.Row="3" Background="#020617" CornerRadius="12" Padding="20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                 <ScrollViewer x:Name="LogScrollViewer">
-                    <TextBlock x:Name="ConsoleLog" Text="[SYSTEM] Application Started..." FontFamily="Consolas" Foreground="#10B981" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="ConsoleLog" Text="[SYSTÈME] Démarrage de Timbo Tool Ultimate..." FontFamily="Consolas" Foreground="#10B981" FontSize="13" TextWrapping="Wrap"/>
                 </ScrollViewer>
             </Border>
         </Grid>

@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using TimboToolApp.Services;
 
 namespace TimboToolApp.Views
@@ -10,149 +11,147 @@ namespace TimboToolApp.Views
     {
         private AdbService _adbService;
         private DeviceDetectionService _deviceService;
+        private bool _isDeviceConnected = false;
 
         public MainWindow()
         {
             InitializeComponent();
+            _adbService = new AdbService();
             _deviceService = new DeviceDetectionService();
+            
             _deviceService.DeviceConnected += OnDeviceConnected;
             _deviceService.DeviceDisconnected += OnDeviceDisconnected;
-            _adbService = new AdbService();
             
             this.Loaded += MainWindow_Loaded;
+            UpdateCreditsDisplay();
+        }
 
-            CreditsDisplay.Text = $"Credits: {CreditsManager.CurrentCredits:N0}";
+        private void UpdateCreditsDisplay()
+        {
+            CreditsDisplay.Text = string.Format("{0:N0}", CreditsManager.CurrentCredits);
+            if (CreditsManager.CurrentCredits <= 0)
+            {
+                CreditsDisplay.Foreground = Brushes.Red;
+            }
         }
 
         private async void BtnReadInfo_Click(object sender, RoutedEventArgs e)
         {
-            Log("Reading Device Info via ADB...");
+            Log("Lecture des informations via ADB...");
             string result = await _adbService.ExecuteAdbCommandAsync("shell getprop ro.product.model");
-            if (result.Contains("Error") || string.IsNullOrEmpty(result))
+            
+            if (string.IsNullOrEmpty(result) || result.Contains("Error"))
             {
-                 Log(result);
-                 Log("Fallback: Simulating Read Info...");
-                 await SimulateOperation("Read Info", 2);
-                 Log("Model: Samsung Galaxy S24 Ultra (Simulated)");
-                 Log("Android: 14.0");
-                 Log("Patch: 2024-12-01");
+                 Log("Appareil non détecté via ADB. Lancement du scan de secours...");
+                 await SimulateOperation("Scan matériel", 2);
+                 Log("Modèle : Samsung Galaxy S24 Ultra (Simulé)");
+                 Log("Android : 14.0");
+                 Log("Sécurité : 1er Décembre 2025");
             }
             else
             {
-                Log($"Model Detected: {result}");
+                Log($"Modèle Détecté : {result}");
                 string serial = await _adbService.ExecuteAdbCommandAsync("shell getprop ro.serialno");
-                Log($"Serial: {serial}");
+                Log($"Numéro de Série : {serial}");
             }
         }
 
         private async void BtnFrp_Click(object sender, RoutedEventArgs e)
         {
-            if (!CreditsManager.DeductLogin()) { Log("Error: Insufficient Credits!"); return; }
-            UpdateCredits();
-            Log("Starting FRP Reset Operation...");
-            await SimulateOperation("Initializing exploit...", 2);
-            await SimulateOperation("Bypassing google account security...", 3);
-            Log("FRP Lock Removed Successfully!");
+            if (CreditsManager.CurrentCredits < 100) { Log("ERREUR : Crédits insuffisants !"); MessageBox.Show("Crédits insuffisants!"); return; }
+            
+            Log("Démarrage du Reset FRP (Compte Google)...");
+            await SimulateOperation("Initialisation de l'exploit", 2);
+            await SimulateOperation("Contournement de la sécurité", 3);
+            Log("Succès : Verrouillage FRP supprimé !");
         }
 
         private async void BtnUnlock_Click(object sender, RoutedEventArgs e)
         {
-            if (!CreditsManager.DeductLogin()) { Log("Error: Insufficient Credits!"); return; }
-            UpdateCredits();
-            Log("Starting Network Unlock...");
-            await SimulateOperation("Reading modem configuration...", 2);
-            await SimulateOperation("Patching network tables...", 4);
-            Log("Network Unlock Successful. Device will reboot.");
+            if (CreditsManager.CurrentCredits < 200) { Log("ERREUR : Crédits insuffisants (200 requis) !"); return; }
+            
+            Log("Démarrage du Désimlockage Réseau...");
+            await SimulateOperation("Lecture des données Modem", 2);
+            await SimulateOperation("Calcul du code NCK", 4);
+            Log("Succès : Appareil Déverrouillé. Redémarrage nécessaire.");
         }
 
-        private async void BtnImei_Click(object sender, RoutedEventArgs e) => await RunSimulatedTask("IMEI Repair");
-        
-        private async void BtnReboot_Click(object sender, RoutedEventArgs e) 
+        private async void OnDeviceConnected(string deviceName)
         {
-            Log("Rebooting device...");
-            await _adbService.ExecuteAdbCommandAsync("reboot");
-            Log("Reboot command sent.");
-        }
-
-        private async void BtnRebootRecovery_Click(object sender, RoutedEventArgs e)
-        {
-            Log("Rebooting to Recovery Mode...");
-            await _adbService.ExecuteAdbCommandAsync("reboot recovery");
-            Log("Reboot command sent.");
-        }
-
-        private void BtnClear_Click(object sender, RoutedEventArgs e)
-        {
-            ConsoleLog.Text = $"[{DateTime.Now:HH:mm:ss}] Console Cleared.";
-        }
-
-        private async void BtnSimulate_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn)
-            {
-                string featureName = btn.Content.ToString() ?? "Operation";
-                Log($"Starting {featureName}...");
-                await SimulateOperation("Environment Check...", 1);
-                await SimulateOperation("Processing target data...", 2);
-                Log($"{featureName} Completed.");
-            }
-        }
-
-        private async void BtnBootloader_Click(object sender, RoutedEventArgs e) => await RunSimulatedTask("Bootloader Unlock");
-        private async void BtnReset_Click(object sender, RoutedEventArgs e) => await RunSimulatedTask("Factory Reset");
-        private void BtnDrivers_Click(object sender, RoutedEventArgs e) => Log("Opening Driver Installer...");
-
-        private async Task RunSimulatedTask(string name)
-        {
-             Log($"Starting {name}...");
-             await SimulateOperation("Working...", 3);
-             Log($"{name} Finished.");
-        }
-
-        private async Task SimulateOperation(string step, int seconds)
-        {
-            Log(step);
-            TaskProgressBar.Value = 0;
-            int subdivisions = seconds * 4;
-            for(int i=0; i<=subdivisions; i++)
-            {
-                await System.Threading.Tasks.Task.Delay(250);
-                TaskProgressBar.Value = (double)i / subdivisions * 100;
-                ProgressText.Text = $"{step} ({TaskProgressBar.Value:0}%)";
-            }
-            Log("Task Segment Done.");
-            ProgressText.Text = "Ready.";
-        }
-
-        private void UpdateCredits()
-        {
-             CreditsDisplay.Text = $"Credits: {CreditsManager.CurrentCredits:N0}";
-        }
-
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            Log("Application Started. Hardware detection active.");
-            System.Threading.Tasks.Task.Run(() => {
-                _deviceService.StartMonitoring();
-            });
-        }
-
-        private void OnDeviceConnected(string deviceName)
-        {
+            if (_isDeviceConnected) return; // Prevent double trigger
+            
             Application.Current.Dispatcher.Invoke(() => {
-                StatusText.Text = "DEVICE DETECTED: PHONE CONNECTED";
-                StatusText.Foreground = System.Windows.Media.Brushes.Green;
-                Log($"[HARDWARE] {deviceName}");
+                _isDeviceConnected = true;
+                StatusText.Text = "APPAREIL CONNECTÉ : " + deviceName;
+                StatusText.Foreground = (Brush)FindResource("PrimaryBrush");
+                StatusDot.Fill = Brushes.Green;
+                Log($"[MATÉRIEL] Connexion détectée : {deviceName}");
+                
+                // DEDUCTION LOGIC
+                Log("Analyse de sécurité... Déduction de 100 crédits.");
+                if (CreditsManager.Deduct(100))
+                {
+                    UpdateCreditsDisplay();
+                    Log("Crédits restants : " + CreditsManager.CurrentCredits);
+                }
+                else
+                {
+                    Log("ALERTE : Crédits Épuisés ! Opérations bloquées.");
+                    MessageBox.Show("Votre solde de crédits est nul. Veuillez recharger.", "Solde Insuffisant", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             });
         }
 
         private void OnDeviceDisconnected()
         {
             Application.Current.Dispatcher.Invoke(() => {
-                StatusText.Text = "Waiting for device...";
-                StatusText.Foreground = (System.Windows.Media.Brush)FindResource("PrimaryBrush");
-                Log("[HARDWARE] Device Disconnected.");
+                _isDeviceConnected = false;
+                StatusText.Text = "En attente d'appareil...";
+                StatusText.Foreground = (Brush)FindResource("MutedTextBrush");
+                StatusDot.Fill = (Brush)FindResource("MutedTextBrush");
+                Log("[MATÉRIEL] Appareil déconnecté.");
             });
+        }
+
+        private async void BtnSimulate_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn)
+            {
+                string tag = btn.Content.ToString() ?? "Opération";
+                Log($"Lancement de : {tag}...");
+                await SimulateOperation("Calcul des données", 2);
+                await SimulateOperation("Injection du patch", 2);
+                Log($"{tag} Terminé avec succès.");
+            }
+        }
+
+        private async void BtnReboot_Click(object sender, RoutedEventArgs e) { Log("Redémarrage..."); await _adbService.ExecuteAdbCommandAsync("reboot"); Log("Commande envoyée."); }
+        private async void BtnRebootRecovery_Click(object sender, RoutedEventArgs e) { Log("Redémarrage Recovery..."); await _adbService.ExecuteAdbCommandAsync("reboot recovery"); Log("Commande envoyée."); }
+        private void BtnDrivers_Click(object sender, RoutedEventArgs e) => Log("Lancement de l'installateur de drivers...");
+        private void BtnClear_Click(object sender, RoutedEventArgs e) { ConsoleLog.Text = $"[{DateTime.Now:HH:mm:ss}] Console effacée."; }
+        private async void BtnReset_Click(object sender, RoutedEventArgs e) { Log("Reset Usine..."); await SimulateOperation("Wipe Data", 3); Log("Terminé."); }
+        private async void BtnImei_Click(object sender, RoutedEventArgs e) { Log("Réparation IMEI..."); await SimulateOperation("Écriture NVRAM", 4); Log("IMEI réparé."); }
+        private async void BtnBootloader_Click(object sender, RoutedEventArgs e) { Log("Unlock Bootloader..."); await SimulateOperation("OEM Unlock", 5); Log("Bootloader déverrouillé."); }
+
+        private async Task SimulateOperation(string step, int seconds)
+        {
+            Log(step + "...");
+            TaskProgressBar.Value = 0;
+            int steps = seconds * 5;
+            for(int i=0; i<=steps; i++)
+            {
+                await Task.Delay(200);
+                TaskProgressBar.Value = (double)i / steps * 100;
+                ProgressText.Text = $"{step} ({TaskProgressBar.Value:0}%)";
+            }
+            Log($"Segment terminé.");
+            ProgressText.Text = "Prêt.";
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            Log("Système prêt. Recherche d'appareil USB/COM...");
+            Task.Run(() => _deviceService.StartMonitoring());
         }
 
         private void Log(string message)
