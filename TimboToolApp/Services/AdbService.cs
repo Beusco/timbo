@@ -5,18 +5,25 @@ using System.Threading.Tasks;
 
 namespace TimboToolApp.Services
 {
+    public class AdbCommandResult
+    {
+        public bool Success { get; set; }
+        public string Output { get; set; } = string.Empty;
+        public string Error { get; set; } = string.Empty;
+    }
+
     public class AdbService
     {
-        public async Task<string> ExecuteAdbCommandAsync(string arguments)
+        public async Task<AdbCommandResult> ExecuteAdbCommandExAsync(string arguments)
         {
             return await Task.Run(() =>
             {
+                var result = new AdbCommandResult();
                 try
                 {
                     string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                     string adbPath = Path.Combine(baseDir, "Tools", "adb", "adb.exe");
 
-                    // Fallback to current directory for single-file extraction behavior
                     if (!File.Exists(adbPath))
                     {
                         adbPath = Path.Combine(baseDir, "adb.exe");
@@ -33,43 +40,61 @@ namespace TimboToolApp.Services
                         CreateNoWindow = true
                     };
 
-                    using (Process process = Process.Start(psi))
+                    using (Process? process = Process.Start(psi))
                     {
-                        if (process == null) return "Error: Failed to start ADB process.";
-                        
-                        string output = process.StandardOutput.ReadToEnd();
-                        string error = process.StandardError.ReadToEnd();
+                        if (process == null)
+                        {
+                            result.Success = false;
+                            result.Error = "Impossible de démarrer le processus ADB.";
+                            return result;
+                        }
+
+                        result.Output = process.StandardOutput.ReadToEnd();
+                        result.Error = process.StandardError.ReadToEnd();
                         process.WaitForExit();
 
-                        if (!string.IsNullOrEmpty(error)) return $"ADB Error: {error}";
-                        return output.Trim();
+                        // Strict result analysis
+                        string combined = (result.Output + result.Error).ToLower();
+                        if (process.ExitCode != 0 || 
+                            combined.Contains("error:") || 
+                            combined.Contains("no devices/emulators found") || 
+                            combined.Contains("permission denied") ||
+                            combined.Contains("unauthorized"))
+                        {
+                            result.Success = false;
+                        }
+                        else
+                        {
+                            result.Success = true;
+                        }
+
+                        return result;
                     }
                 }
                 catch (Exception ex)
                 {
-                    return $"Erreur Système : {ex.Message} (Vérifiez si ADB est bien présent dans Tools/adb/)";
+                    result.Success = false;
+                    result.Error = $"Erreur Système : {ex.Message}";
+                    return result;
                 }
             });
         }
 
-        public async Task KillServerAsync()
+        // Keep legacy for compatibility or update it to use the new ex version
+        public async Task<string> ExecuteAdbCommandAsync(string arguments)
         {
-             await ExecuteAdbCommandAsync("kill-server");
+            var res = await ExecuteAdbCommandExAsync(arguments);
+            if (!res.Success) return !string.IsNullOrEmpty(res.Error) ? $"ADB Error: {res.Error}" : $"ADB Error: {res.Output}";
+            return res.Output.Trim();
         }
 
-        public async Task StartServerAsync()
-        {
-             await ExecuteAdbCommandAsync("start-server");
-        }
+        public async Task KillServerAsync() => await ExecuteAdbCommandAsync("kill-server");
+        public async Task StartServerAsync() => await ExecuteAdbCommandAsync("start-server");
 
         public async Task<string> GetDeviceStateAsync()
         {
-            string output = await ExecuteAdbCommandAsync("devices");
-            // Output format is usually:
-            // List of devices attached
-            // SERIAL    device
-            // SERIAL    unauthorized
-            // SERIAL    offline
+            var res = await ExecuteAdbCommandExAsync("devices");
+            string output = res.Output;
             
             string[] lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in lines)
@@ -79,13 +104,11 @@ namespace TimboToolApp.Services
                 if (line.Contains("\toffline")) return "OFFLINE";
                 if (line.Contains("\trecovery")) return "RECOVERY";
                 if (line.Contains("\tsideload")) return "SIDELOAD";
+                if (line.Contains("\tfastboot")) return "FASTBOOT";
             }
             return "NOT_FOUND";
         }
 
-        public async Task<bool> IsDeviceConnectedAsync()
-        {
-            return await GetDeviceStateAsync() == "ONLINE";
-        }
+        public async Task<bool> IsDeviceConnectedAsync() => await GetDeviceStateAsync() == "ONLINE";
     }
 }

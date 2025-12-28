@@ -10,6 +10,9 @@ namespace TimboToolApp.Services
         public event Action<string>? DeviceConnected;
         public event Action? DeviceDisconnected;
 
+        public string CurrentMode { get; private set; } = "DISCONNECTED";
+        public string DeviceType { get; private set; } = "UNKNOWN";
+
         private ManagementEventWatcher? _watcher;
 
         public void StartMonitoring()
@@ -34,16 +37,26 @@ namespace TimboToolApp.Services
                         {
                             // Filter for common phone/service strings to avoid mouse/keyboard triggers
                             string combined = (deviceName + " " + deviceDesc).ToUpper();
+                            
                             if (combined.Contains("SAMSUNG") || combined.Contains("MOBILE") || 
                                 combined.Contains("ADB") || combined.Contains("MODEM") || 
                                 combined.Contains("ANDROID") || combined.Contains("QUALCOMM") ||
                                 combined.Contains("MTK") || combined.Contains("GADGET"))
                             {
+                                DeviceType = combined.Contains("SAMSUNG") ? "SAMSUNG" : "ANDROID";
+                                
+                                if (combined.Contains("ADB")) CurrentMode = "ADB";
+                                else if (combined.Contains("DOWNLOAD") || combined.Contains("MODEM") || combined.Contains("GADGET")) CurrentMode = "DOWNLOAD";
+                                else if (combined.Contains("FASTBOOT")) CurrentMode = "FASTBOOT";
+                                else CurrentMode = "USB_CONNECTED";
+
                                 Application.Current.Dispatcher.Invoke(() => DeviceConnected?.Invoke(deviceName));
                             }
                         }
                         else if (eventType == "__InstanceDeletionEvent")
                         {
+                            CurrentMode = "DISCONNECTED";
+                            DeviceType = "UNKNOWN";
                             Application.Current.Dispatcher.Invoke(() => DeviceDisconnected?.Invoke());
                         }
                     };
@@ -52,9 +65,14 @@ namespace TimboToolApp.Services
             }
             catch (Exception ex)
             {
-                // Log strictly to console/debug, don't crash, but maybe inform user in UI log if possible
                 System.Diagnostics.Debug.WriteLine("Hardware Monitoring Error: " + ex.Message);
             }
+        }
+
+        public string? GetAdbModeStatus()
+        {
+            // This is a helper if needed, but we rely on events
+            return CurrentMode;
         }
 
         public string[] GetAvailablePorts()
