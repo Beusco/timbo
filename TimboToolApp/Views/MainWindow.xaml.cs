@@ -124,19 +124,49 @@ namespace TimboToolApp.Views
                     StatusDot.Fill = Brushes.Red;
                 }
 
-                // Verify ADB status
-                bool adbReady = await _adbService.IsDeviceConnectedAsync();
-                if (adbReady)
+                // Verify ADB status with enhanced state check
+                string adbState = await _adbService.GetDeviceStateAsync();
+                if (adbState == "ONLINE")
                 {
                     Log("Service ADB : Prêt et Autorisé.");
                     StatusText.Text = "APPAREIL PRÊT (ADB OK)";
+                    StatusDot.Fill = Brushes.LimeGreen;
+                }
+                else if (adbState == "UNAUTHORIZED")
+                {
+                    Log("ALERTE : Appareil non autorisé !");
+                    Log("ACTION REQUISE : Regardez l'écran du téléphone et cochez 'Toujours autoriser' puis cliquez sur OK.");
+                    StatusText.Text = "ATTENTE AUTORISATION...";
+                    StatusDot.Fill = Brushes.Orange;
+                }
+                else if (adbState == "OFFLINE")
+                {
+                    Log("ALERTE : Appareil hors ligne. Vérifiez le câble USB.");
+                    StatusText.Text = "APPAREIL OFFLINE";
+                    StatusDot.Fill = Brushes.Red;
                 }
                 else
                 {
-                    Log("Service ADB : Appareil non autorisé ou non détecté.");
-                    Log("Conseil : Acceptez la demande de débogage sur l'écran du téléphone.");
+                    Log("Service ADB : Aucun appareil détecté par le pont ADB.");
+                    Log("Conseil : Vérifiez que les drivers sont installés et le débogage activé.");
                 }
             });
+        }
+
+        private async void BtnRestartAdb_Click(object sender, RoutedEventArgs e)
+        {
+            Log("Arrêt du serveur ADB...");
+            await _adbService.KillServerAsync();
+            await Task.Delay(1000);
+            Log("Démarrage du serveur ADB...");
+            await _adbService.StartServerAsync();
+            Log("Serveur ADB redémarré avec succès.");
+        }
+
+        private void BtnCopyLogs_Click(object sender, RoutedEventArgs e)
+        {
+            Clipboard.SetText(ConsoleLog.Text);
+            Log("Logs copiés dans le presse-papier !");
         }
 
         private void OnDeviceDisconnected()

@@ -51,11 +51,40 @@ namespace TimboToolApp.Services
             });
         }
 
+        public async Task KillServerAsync()
+        {
+             await ExecuteAdbCommandAsync("kill-server");
+        }
+
+        public async Task StartServerAsync()
+        {
+             await ExecuteAdbCommandAsync("start-server");
+        }
+
+        public async Task<string> GetDeviceStateAsync()
+        {
+            string output = await ExecuteAdbCommandAsync("devices");
+            // Output format is usually:
+            // List of devices attached
+            // SERIAL    device
+            // SERIAL    unauthorized
+            // SERIAL    offline
+            
+            string[] lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                if (line.Contains("\tdevice")) return "ONLINE";
+                if (line.Contains("\tunauthorized")) return "UNAUTHORIZED";
+                if (line.Contains("\toffline")) return "OFFLINE";
+                if (line.Contains("\trecovery")) return "RECOVERY";
+                if (line.Contains("\tsideload")) return "SIDELOAD";
+            }
+            return "NOT_FOUND";
+        }
+
         public async Task<bool> IsDeviceConnectedAsync()
         {
-            string result = await ExecuteAdbCommandAsync("devices");
-            // Check if there is more than just the header "List of devices attached"
-            return result.Split('\n').Length > 1 && result.Contains("\tdevice");
+            return await GetDeviceStateAsync() == "ONLINE";
         }
     }
 }

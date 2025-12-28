@@ -69,6 +69,7 @@
                         <Button Content="Mode Recovery" Style="{StaticResource ModernButton}" Margin="8" Click="BtnRebootRecovery_Click"/>
                         <Button Content="Reset Usine" Style="{StaticResource ModernButton}" Margin="8" Click="BtnReset_Click"/>
                         <Button Content="Installer Drivers" Style="{StaticResource ModernButton}" Margin="8" Click="BtnDrivers_Click"/>
+                        <Button Content="Restart ADB Server" Style="{StaticResource ModernButton}" Margin="8" Background="#F59E0B" Click="BtnRestartAdb_Click"/>
                         <Button Content="Effacer Console" Style="{StaticResource ModernButton}" Margin="8" Background="#475569" Click="BtnClear_Click"/>
                     </UniformGrid>
                 </TabItem>
@@ -119,9 +120,12 @@
 
             <!-- Console Log -->
             <Border Grid.Row="3" Background="#020617" CornerRadius="12" Padding="20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-                <ScrollViewer x:Name="LogScrollViewer">
-                    <TextBlock x:Name="ConsoleLog" Text="[SYSTÈME] Démarrage de Timbo Tool Ultimate..." FontFamily="Consolas" Foreground="#10B981" FontSize="13" TextWrapping="Wrap"/>
-                </ScrollViewer>
+                <Grid>
+                    <ScrollViewer x:Name="LogScrollViewer">
+                        <TextBlock x:Name="ConsoleLog" Text="[SYSTÈME] Démarrage de Timbo Tool Ultimate..." FontFamily="Consolas" Foreground="#10B981" FontSize="13" TextWrapping="Wrap"/>
+                    </ScrollViewer>
+                    <Button Content="COPIER LOGS" HorizontalAlignment="Right" VerticalAlignment="Top" Padding="10,5" Background="#334155" Foreground="White" FontSize="10" BorderThickness="0" Cursor="Hand" Click="BtnCopyLogs_Click" Opacity="0.8"/>
+                </Grid>
             </Border>
         </Grid>
     </Grid>
