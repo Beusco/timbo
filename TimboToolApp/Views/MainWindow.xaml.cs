@@ -13,6 +13,8 @@ namespace TimboToolApp.Views
         private AdbService _adbService;
         private DeviceDetectionService _deviceService;
         private SamsungService _samsungService;
+        private FastbootService _fastbootService;
+        private FrpService _frpService;
         private bool _isDeviceConnected = false;
 
         public MainWindow()
@@ -21,6 +23,8 @@ namespace TimboToolApp.Views
             _adbService = new AdbService();
             _deviceService = new DeviceDetectionService();
             _samsungService = new SamsungService();
+            _fastbootService = new FastbootService();
+            _frpService = new FrpService();
             
             _deviceService.DeviceConnected += OnDeviceConnected;
             _deviceService.DeviceDisconnected += OnDeviceDisconnected;
@@ -28,6 +32,114 @@ namespace TimboToolApp.Views
             this.Loaded += MainWindow_Loaded;
             UpdateCreditsDisplay();
         }
+        
+        // ... (Existing Credits and ReadInfo Logic - Keep intact or minor updates)
+
+        private async void BtnReadInfo_Click(object sender, RoutedEventArgs e)
+        {
+             // Priority: Check Fastboot First if mode says so
+             if (_deviceService.CurrentMode == "FASTBOOT")
+             {
+                 Log("Action : Lecture Infos Fastboot...");
+                 string info = await _fastbootService.ReadInfoAsync();
+                 Log($"RÉSULTAT :\n{info}");
+                 return;
+             }
+             
+             if (!CheckModeAllowed("ADB")) return;
+
+            Log("Action : Lecture des informations réelles...");
+            var result = await _adbService.ExecuteAdbCommandExAsync("shell getprop ro.product.model");
+            
+            if (!result.Success)
+            {
+                Log($"ERREUR TECHNIQUE : {result.Error}");
+                return;
+            }
+
+            Log($"RÉSULTAT : Modèle {result.Output.Trim()} détecté.");
+            var serial = await _adbService.ExecuteAdbCommandAsync("shell getprop ro.serialno");
+            Log($"ID Série : {serial}");
+            // ... credits deduction
+        }
+
+        // ... (Existing Reboot Logic)
+
+        private async void BtnFrp_Click(object sender, RoutedEventArgs e)
+        {
+           if (!CheckConnectionOrLog()) return;
+           Log("OPÉRATION : Reset FRP / Bypass Google...");
+
+           if (_deviceService.CurrentMode == "ADB")
+           {
+               Log("> Tentative méthode 1 : Lancement Navigateur (YouTube)...");
+               string res1 = await _frpService.AttemptBrowserBypassAsync();
+               Log(res1);
+               Log("> Tentative méthode 2 : Ouverture Paramètres...");
+               string res2 = await _frpService.AttemptSettingsLaunchAsync();
+               Log(res2);
+               Log("INFO : Si le navigateur s'est ouvert, le bypass a réussi !");
+           }
+           else
+           {
+               Log("INFO : Mode ADB non détecté. Simulation Exploitation Faille...");
+               await SimulateOperation("Injection Payload (Simulation)", 3);
+           }
+           
+           if (CreditsManager.Deduct(100)) UpdateCreditsDisplay();
+        }
+
+        private async void BtnReset_Click(object sender, RoutedEventArgs e) 
+        { 
+            if (!CheckConnectionOrLog()) return;
+            Log("Action : Factory Reset (Wipe Data)..."); 
+
+            if (_deviceService.CurrentMode == "FASTBOOT")
+            {
+                string res = await _fastbootService.WipeDataAsync();
+                Log($"FASTBOOT : {res}");
+            }
+            else if (_deviceService.CurrentMode == "ADB")
+            {
+                 var res = await _adbService.ExecuteAdbCommandExAsync("shell recovery --wipe_data");
+                 if (!res.Success)
+                 {
+                     // Fallback attempt
+                     await _adbService.ExecuteAdbCommandExAsync("shell wipe data");
+                     Log("Commande ADB Reset envoyée. Vérifiez le téléphone.");
+                 }
+            }
+            else
+            {
+                Log("ERREUR : Nécessite le mode ADB ou FASTBOOT.");
+            }
+        }
+
+        private async void BtnBootloader_Click(object sender, RoutedEventArgs e) 
+        { 
+            // Support both ADB and Fastboot for this button logic
+            if (_deviceService.CurrentMode == "ADB")
+            {
+                 Log("Action : Redémarrage en Bootloader...");
+                 await _adbService.ExecuteAdbCommandAsync("reboot bootloader");
+                 return;
+            }
+
+            if (_deviceService.CurrentMode == "FASTBOOT")
+            {
+                Log("Action : Déverrouillage Bootloader (Réel)...");
+                string res = await _fastbootService.UnlockBootloaderAsync();
+                Log(res);
+            }
+            else
+            {
+                 Log("ERREUR : Connectez l'appareil en mode ADB ou FASTBOOT.");
+            }
+        }
+
+        // Keep other buttons simple or wired to Simulations if no real impl possible
+        // But enforce CheckConnectionOrLog everywhere
+        // ... (BtnUnlock, BtnImei, BtnSimulate, etc from previous Step 267)
 
         private void UpdateCreditsDisplay()
         {
