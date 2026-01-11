@@ -32,8 +32,12 @@ namespace TimboToolApp.Views
             this.Loaded += MainWindow_Loaded;
             UpdateCreditsDisplay();
         }
-        
-        // ... (Existing Credits and ReadInfo Logic - Keep intact or minor updates)
+
+        private void UpdateCreditsDisplay()
+        {
+            CreditsDisplay.Text = string.Format("{0:N0}", CreditsManager.CurrentCredits);
+            CreditsDisplay.Foreground = CreditsManager.CurrentCredits <= 0 ? Brushes.Red : (Brush)FindResource("PrimaryBrush");
+        }
 
         private async void BtnReadInfo_Click(object sender, RoutedEventArgs e)
         {
@@ -60,10 +64,49 @@ namespace TimboToolApp.Views
             Log($"RÉSULTAT : Modèle {result.Output.Trim()} détecté.");
             var serial = await _adbService.ExecuteAdbCommandAsync("shell getprop ro.serialno");
             Log($"ID Série : {serial}");
-            // ... credits deduction
+            
+            if (CreditsManager.Deduct(10)) 
+            {
+                UpdateCreditsDisplay();
+                Log("Transaction : -10 crédits pour l'analyse.");
+            }
         }
 
-        // ... (Existing Reboot Logic)
+        private async void BtnReboot_Click(object sender, RoutedEventArgs e)
+        {
+            if (_deviceService.CurrentMode == "DOWNLOAD")
+            {
+                Log("Action : Tentative de redémarrage forcé via Port COM (Samsung)...");
+                bool success = await _samsungService.ForceRebootAsync();
+                if (success) 
+                {
+                    Log("SUCCÈS : Commande de sortie de mode Download envoyée.");
+                }
+                else
+                {
+                    Log("ÉCHEC : Impossible de redémarrer via le port COM.");
+                    Log("ACTION MANUELLE : Maintenez Volume Bas + Power pendant 10 secondes.");
+                }
+                return;
+            }
+
+            if (!CheckModeAllowed("ADB")) return;
+
+            Log("Action : Redémarrage standard ADB...");
+            var result = await _adbService.ExecuteAdbCommandExAsync("reboot");
+            if (result.Success) Log("SUCCÈS : Le téléphone redémarre.");
+            else Log($"ÉCHEC : {result.Error} {result.Output}");
+        }
+
+        private async void BtnRebootRecovery_Click(object sender, RoutedEventArgs e)
+        {
+            if (!CheckModeAllowed("ADB")) return;
+
+            Log("Action : Redémarrage en Recovery...");
+            var result = await _adbService.ExecuteAdbCommandExAsync("reboot recovery");
+            if (result.Success) Log("SUCCÈS : Passage en mode Recovery.");
+            else Log($"ÉCHEC : {result.Error}");
+        }
 
         private async void BtnFrp_Click(object sender, RoutedEventArgs e)
         {
@@ -137,156 +180,6 @@ namespace TimboToolApp.Views
             }
         }
 
-        // Keep other buttons simple or wired to Simulations if no real impl possible
-        // But enforce CheckConnectionOrLog everywhere
-        // ... (BtnUnlock, BtnImei, BtnSimulate, etc from previous Step 267)
-
-        private void UpdateCreditsDisplay()
-        {
-            CreditsDisplay.Text = string.Format("{0:N0}", CreditsManager.CurrentCredits);
-            CreditsDisplay.Foreground = CreditsManager.CurrentCredits <= 0 ? Brushes.Red : (Brush)FindResource("PrimaryBrush");
-        }
-
-        private async void BtnReadInfo_Click(object sender, RoutedEventArgs e)
-        {
-            if (!CheckModeAllowed("ADB")) return;
-
-            Log("Action : Lecture des informations réelles...");
-            var result = await _adbService.ExecuteAdbCommandExAsync("shell getprop ro.product.model");
-            
-            if (!result.Success)
-            {
-                Log($"ERREUR TECHNIQUE : {result.Error}");
-                return;
-            }
-
-            Log($"RÉSULTAT : Modèle {result.Output.Trim()} détecté.");
-            var serial = await _adbService.ExecuteAdbCommandAsync("shell getprop ro.serialno");
-            Log($"ID Série : {serial}");
-            
-            if (CreditsManager.Deduct(10)) 
-            {
-                UpdateCreditsDisplay();
-                Log("Transaction : -10 crédits pour l'analyse.");
-            }
-        }
-
-        private async void BtnReboot_Click(object sender, RoutedEventArgs e)
-        {
-            if (_deviceService.CurrentMode == "DOWNLOAD")
-            {
-                Log("Action : Tentative de redémarrage forcé via Port COM (Samsung)...");
-                bool success = await _samsungService.ForceRebootAsync();
-                if (success) 
-                {
-                    Log("SUCCÈS : Commande de sortie de mode Download envoyée.");
-                }
-                else
-                {
-                    Log("ÉCHEC : Impossible de redémarrer via le port COM.");
-                    Log("ACTION MANUELLE : Maintenez Volume Bas + Power pendant 10 secondes.");
-                }
-                return;
-            }
-
-            if (!CheckModeAllowed("ADB")) return;
-
-            Log("Action : Redémarrage standard ADB...");
-            var result = await _adbService.ExecuteAdbCommandExAsync("reboot");
-            if (result.Success) Log("SUCCÈS : Le téléphone redémarre.");
-            else Log($"ÉCHEC : {result.Error} {result.Output}");
-        }
-
-        private async void BtnRebootRecovery_Click(object sender, RoutedEventArgs e)
-        {
-            if (!CheckModeAllowed("ADB")) return;
-
-            Log("Action : Redémarrage en Recovery...");
-            var result = await _adbService.ExecuteAdbCommandExAsync("reboot recovery");
-            if (result.Success) Log("SUCCÈS : Passage en mode Recovery.");
-            else Log($"ÉCHEC : {result.Error}");
-        }
-
-        private async void OnDeviceConnected(string deviceName)
-        {
-            Application.Current.Dispatcher.Invoke(async () => {
-                _isDeviceConnected = true;
-                UpdateStatusUI();
-                Log($"[CONNEXION] {deviceName} [{_deviceService.CurrentMode}]");
-                
-                if (_deviceService.CurrentMode == "ADB")
-                {
-                    string adbState = await _adbService.GetDeviceStateAsync();
-                    if (adbState == "ONLINE")
-                    {
-                        Log("SERVICE : ADB prêt et autorisé.");
-                    }
-                    else if (adbState == "UNAUTHORIZED")
-                    {
-                        Log("ALERTE : ADB non autorisé ! Vérifiez l'écran du mobile.");
-                        StatusText.Text = "ATTENTE AUTORISATION RSA";
-                        StatusDot.Fill = Brushes.Orange;
-                    }
-                }
-            });
-        }
-
-        private void OnDeviceDisconnected()
-        {
-            Application.Current.Dispatcher.Invoke(() => {
-                _isDeviceConnected = false;
-                StatusText.Text = "En attente d'appareil...";
-                StatusText.Foreground = (Brush)FindResource("MutedTextBrush");
-                StatusDot.Fill = (Brush)FindResource("MutedTextBrush");
-                Log("[OFFLINE] Appareil déconnecté.");
-            });
-        }
-
-        private void UpdateStatusUI()
-        {
-            StatusText.Text = $"APPAREIL : {_deviceService.DeviceType} ({_deviceService.CurrentMode})";
-            StatusText.Foreground = (Brush)FindResource("PrimaryBrush");
-            
-            StatusDot.Fill = _deviceService.CurrentMode switch {
-                "ADB" => Brushes.LimeGreen,
-                "DOWNLOAD" => Brushes.Orange,
-                "FASTBOOT" => Brushes.Cyan,
-                _ => Brushes.Blue
-            };
-        }
-
-        private bool CheckModeAllowed(params string[] allowedModes)
-        {
-            if (!_isDeviceConnected)
-            {
-                Log("ERREUR : Aucun appareil détecté. Branchez un câble USB.");
-                return false;
-            }
-
-            foreach (var m in allowedModes)
-            {
-                if (_deviceService.CurrentMode == m) return true;
-            }
-
-            Log($"ERREUR : Cette fonction nécessite le mode {string.Join(" ou ", allowedModes)}.");
-            Log($"Mode Actuel : {_deviceService.CurrentMode}.");
-            return false;
-        }
-
-        private async void BtnFrp_Click(object sender, RoutedEventArgs e)
-        {
-            if (!CheckModeAllowed("ADB", "DOWNLOAD")) return;
-
-            Log("OPÉRATION : Reset FRP...");
-            await SimulateOperation("Vérification des vulnérabilités", 3);
-            
-            if (CreditsManager.Deduct(100))
-            {
-                UpdateCreditsDisplay();
-                Log("SUCCÈS : Verrouillage Google (FRP) supprimé !");
-            }
-        }
-
         private async void BtnUnlock_Click(object sender, RoutedEventArgs e)
         {
             if (!CheckModeAllowed("ADB", "DOWNLOAD", "FASTBOOT")) return;
@@ -342,21 +235,77 @@ namespace TimboToolApp.Views
         }
 
         private void BtnClear_Click(object sender, RoutedEventArgs e) => ConsoleLog.Text = $"[{DateTime.Now:HH:mm:ss}] Console réinitialisée.";
-        
-        private async void BtnReset_Click(object sender, RoutedEventArgs e) 
-        { 
-            if (!CheckModeAllowed("ADB", "DOWNLOAD")) return;
-            Log("Action : Factory Reset (Wipe Data)..."); 
-            await SimulateOperation("Formatage UserData", 3); 
-            Log("Appareil remis à zéro."); 
+
+        private async void OnDeviceConnected(string deviceName)
+        {
+            Application.Current.Dispatcher.Invoke(async () => {
+                _isDeviceConnected = true;
+                UpdateStatusUI();
+                Log($"[CONNEXION] {deviceName} [{_deviceService.CurrentMode}]");
+                
+                if (_deviceService.CurrentMode == "ADB")
+                {
+                    string adbState = await _adbService.GetDeviceStateAsync();
+                    if (adbState == "ONLINE")
+                    {
+                        Log("SERVICE : ADB prêt et autorisé.");
+                    }
+                    else if (adbState == "UNAUTHORIZED")
+                    {
+                        Log("ALERTE : ADB non autorisé ! Vérifiez l'écran du mobile.");
+                        StatusText.Text = "ATTENTE AUTORISATION RSA";
+                        StatusDot.Fill = Brushes.Orange;
+                    }
+                }
+            });
         }
 
-        private async void BtnBootloader_Click(object sender, RoutedEventArgs e) 
-        { 
-            if (!CheckModeAllowed("ADB", "FASTBOOT")) return;
-            Log("Action : Unlock Bootloader..."); 
-            await SimulateOperation("Bypass Security Patch", 4); 
-            Log("Opération terminée."); 
+        private void OnDeviceDisconnected()
+        {
+            Application.Current.Dispatcher.Invoke(() => {
+                _isDeviceConnected = false;
+                StatusText.Text = "En attente d'appareil...";
+                StatusText.Foreground = (Brush)FindResource("MutedTextBrush");
+                StatusDot.Fill = (Brush)FindResource("MutedTextBrush");
+                Log("[OFFLINE] Appareil déconnecté.");
+            });
+        }
+
+        private void UpdateStatusUI()
+        {
+            StatusText.Text = $"APPAREIL : {_deviceService.DeviceType} ({_deviceService.CurrentMode})";
+            StatusText.Foreground = (Brush)FindResource("PrimaryBrush");
+            
+            StatusDot.Fill = _deviceService.CurrentMode switch {
+                "ADB" => Brushes.LimeGreen,
+                "DOWNLOAD" => Brushes.Orange,
+                "FASTBOOT" => Brushes.Cyan,
+                _ => Brushes.Blue
+            };
+        }
+
+        private bool CheckModeAllowed(params string[] allowedModes)
+        {
+            if (!CheckConnectionOrLog()) return false;
+
+            foreach (var m in allowedModes)
+            {
+                if (_deviceService.CurrentMode == m) return true;
+            }
+
+            Log($"ERREUR : Cette fonction nécessite le mode {string.Join(" ou ", allowedModes)}.");
+            Log($"Mode Actuel : {_deviceService.CurrentMode}.");
+            return false;
+        }
+
+        private bool CheckConnectionOrLog()
+        {
+            if (!_isDeviceConnected)
+            {
+                Log("ERREUR : Aucun appareil détecté. Branchez un câble USB et vérifiez les drivers.");
+                return false;
+            }
+            return true;
         }
 
         private async Task SimulateOperation(string step, int seconds)
@@ -375,7 +324,7 @@ namespace TimboToolApp.Views
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            Log("Timbo Tool Ultimate V3.1 démarré. Mode Intelligence activé.");
+            Log("Timbo Tool Ultimate V3.2 démarré. Multi-Mode Engine Ready.");
             Task.Run(() => _deviceService.StartMonitoring());
         }
 
